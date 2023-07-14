@@ -1,5 +1,5 @@
 ---
-title: "Trial 1 analysis"
+title: "varying pH analysis"
 author: "Dan Stoebel"
 edits: "Rodrigo Rosas"
 date: "`r Sys.Date()`"
@@ -18,7 +18,7 @@ theme_set(theme_classic())
 
 The data are in an excel file. The output is not in a rectangular format, which is not ideal for R. However, there is one rectangular piece of the data that has all we want for our analysis - cells B28 to CU185. I can read in just this chunk of data with:
 ```{r}
-data_raw <- read_excel("2023-07-05 varying pH trial 3 (2).xlsx", range = "B28:CU221")
+data_raw <- read_excel("2023-07-14 varying pH trial 4_1(success).xlsx", range = "B28:CU221")
 ```
 
 
@@ -39,7 +39,7 @@ data_final <- data_raw %>%
   mutate(well_status = case_when(well %in% blank_wells ~ "blank",
                                  well %in% edge_cells ~ "edge",
                                  TRUE ~ "interior")) %>%
-  mutate(condition = case_when(well %in% condition_1 ~ "inital of 4.5", TRUE ~ "intial of 4.0")) %>%
+  mutate(condition = case_when(well %in% condition_1 ~ "inital of 7.0", TRUE ~ "intial of 7.5")) %>%
   select(elapsed_mins, well, well_status, OD600, condition)
   
 ```
@@ -90,7 +90,8 @@ many_easylinear_fits <- all_easylinear(OD600 ~ elapsed_mins |well , data = cells
 ```
 
 ```{r}
-fit <- fit_easylinear(data_final3$elapsed_mins, data_final3$avg_od)
+fit_cond1 <- fit_easylinear(data_finalcond1$elapsed_mins, data_finalcond1$avg_od)
+fit_cond2 <- fit_easylinear(data_finalcond2$elapsed_mins, data_finalcond2$avg_od)
 ```
 
 Plot out each of these individual cases.
@@ -98,9 +99,11 @@ Plot out each of these individual cases.
 pdf(width = 30, height = 30)
 par(mfrow = c(8, 10))
 par(mar = c(2.5, 4, 2, 1))
-plot(many_easylinear_fits, log = "y")
+#plot(many_easylinear_fits, log = "y")
+plot(fit_cond1, log = "y")
 dev.off()
 ```
+
 
 Calculate some summary statistics
 ```{r}
