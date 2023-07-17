@@ -18,7 +18,7 @@ theme_set(theme_classic())
 
 The data are in an excel file. The output is not in a rectangular format, which is not ideal for R. However, there is one rectangular piece of the data that has all we want for our analysis - cells B28 to CU185. I can read in just this chunk of data with:
 ```{r}
-data_raw <- read_excel("2023-07-14 varying pH trial 4_1(success).xlsx", range = "B28:CU221")
+data_raw <- read_excel("2023-07-05 varying pH trial 3 (2).xlsx", range = "B28:CU221")
 ```
 
 
@@ -39,23 +39,20 @@ data_final <- data_raw %>%
   mutate(well_status = case_when(well %in% blank_wells ~ "blank",
                                  well %in% edge_cells ~ "edge",
                                  TRUE ~ "interior")) %>%
-  mutate(condition = case_when(well %in% condition_1 ~ "inital of 7.0", TRUE ~ "intial of 7.5")) %>%
+  mutate(condition = case_when(well %in% condition_1 ~ "inital of 4.5", TRUE ~ "intial of 4.0")) %>%
   select(elapsed_mins, well, well_status, OD600, condition)
   
 ```
 
 ```{r}
 data_final2 <- data_final %>%
-  filter(well_status == "interior")
-```
-
-```{r}
-data_final3 <- data_final2 %>%
+  filter(well_status == "interior") %>%
+  filter(elapsed_mins >= 100) %>%
   group_by(elapsed_mins, condition) %>%
   summarise(avg_od = mean(OD600))
 ```
 ```{r}
-data_final3 %>%
+data_final2 %>%
   ggplot(aes(x = elapsed_mins, y = avg_od)) + 
   geom_point(aes(color= condition))
 ```
@@ -78,7 +75,7 @@ The package `growthrates` has many ways to estimate growth rates. Type `vignette
 
 For this analysis we'll use the "easy linear" approach, which uses liner regression to find the maximal growth rate.
 ```{r}
-splitted.data <- multisplit(data_final3, "condition")
+splitted.data <- multisplit(data_final2, "condition")
 data_finalcond1 <- splitted.data[[1]]
 data_finalcond2 <- splitted.data[[2]]
 ```
@@ -92,16 +89,28 @@ many_easylinear_fits <- all_easylinear(OD600 ~ elapsed_mins |well , data = cells
 ```{r}
 fit_cond1 <- fit_easylinear(data_finalcond1$elapsed_mins, data_finalcond1$avg_od)
 fit_cond2 <- fit_easylinear(data_finalcond2$elapsed_mins, data_finalcond2$avg_od)
+yint_cond1 <- coef(fit_cond1)[[1]]
+slope_cond1 <- coef(fit_cond1)[[3]]
+yint_cond2 <- coef(fit_cond2)[[1]]
+slope_cond2 <- coef(fit_cond2)[[3]]
+```
+
+```{r}
+data_final2 %>%
+  ggplot(aes(x = elapsed_mins, y = avg_od)) + 
+  geom_point(aes(color= condition)) +
+  geom_abline(slope = slope_cond1, intercept = yint_cond1) +
+  geom_abline(slope = slope_cond2, intercept = yint_cond2)
 ```
 
 Plot out each of these individual cases.
 ```{r}
-pdf(width = 30, height = 30)
-par(mfrow = c(8, 10))
+#pdf(width = 30, height = 30)
+par(mfrow = c(1,2))
 par(mar = c(2.5, 4, 2, 1))
-#plot(many_easylinear_fits, log = "y")
 plot(fit_cond1, log = "y")
-dev.off()
+plot(fit_cond1)
+#dev.off()
 ```
 
 
