@@ -44,10 +44,11 @@ data_finaltrial1 <- data_raw1 %>%
   mutate(well_status = case_when(well %in% blank_wells ~ "blank",
                                  well %in% edge_cells ~ "edge",
                                  TRUE ~ "interior")) %>%
-  mutate(condition = case_when(well %in% condition_1 ~ "inital of 6.50", TRUE ~ "intial of 5.99")) %>%
+  mutate(condition = case_when(well %in% condition_1 ~ "initial of 6.50", TRUE ~ "initial of 5.99")) %>%
   select(elapsed_mins, well, well_status, OD600, condition)
   
 data_final2trial1 <- data_finaltrial1 %>%
+  filter(elapsed_mins <= 1920) %>%
   group_by(elapsed_mins, condition) %>%
   summarise(avg_od = mean(OD600))
 ```
@@ -60,7 +61,7 @@ data_finaltrial2 <- data_raw2 %>%
   mutate(well_status = case_when(well %in% blank_wells ~ "blank",
                                  well %in% edge_cells ~ "edge",
                                  TRUE ~ "interior")) %>%
-  mutate(condition = case_when(well %in% condition_1 ~ "inital of 5.50", TRUE ~ "intial of 5.05")) %>%
+  mutate(condition = case_when(well %in% condition_1 ~ "initial of 5.50", TRUE ~ "initial of 5.05")) %>%
   select(elapsed_mins, well, well_status, OD600, condition)
   
 data_final2trial2 <- data_finaltrial2 %>%
@@ -77,11 +78,11 @@ data_finaltrial3 <- data_raw3 %>%
   mutate(well_status = case_when(well %in% blank_wells ~ "blank",
                                  well %in% edge_cells ~ "edge",
                                  TRUE ~ "interior")) %>%
-  mutate(condition = case_when(well %in% condition_1 ~ "inital of 4.48", TRUE ~ "intial of 4.07")) %>%
+  mutate(condition = case_when(well %in% condition_1 ~ "initial of 4.48", TRUE ~ "initial of 4.07")) %>%
   select(elapsed_mins, well, well_status, OD600, condition)
   
 data_final2trial3 <- data_finaltrial3 %>%
-  filter(elapsed_mins >= 100) %>%
+#  filter(elapsed_mins >= 100) %>%
   group_by(elapsed_mins, condition) %>%
   summarise(avg_od = mean(OD600))
 ```
@@ -95,7 +96,7 @@ data_finaltrial4 <- data_raw4 %>%
   mutate(well_status = case_when(well %in% blank_wells ~ "blank",
                                  well %in% edge_cells ~ "edge",
                                  TRUE ~ "interior")) %>%
-  mutate(condition = case_when(well %in% condition_1 ~ "inital of 7.04", TRUE ~ "intial of 7.54")) %>%
+  mutate(condition = case_when(well %in% condition_1 ~ "initial of 7.04", TRUE ~ "initial of 7.54")) %>%
   select(elapsed_mins, well, well_status, OD600, condition)
   
 data_final2trial4 <- data_finaltrial4 %>%
@@ -108,11 +109,20 @@ data_final2trial4 <- data_finaltrial4 %>%
 allthedata <- bind_rows(data_final2trial1, data_final2trial2, data_final2trial3, data_final2trial4)
 ```
 
+##make 'condtion' a factor and reorder for increasing pH on legend
+
 ```{r}
-allthedata %>%
+allthedata2 <- allthedata
+allthedata2$condition <- as.factor(allthedata2$condition)
+allthedata2$condition <-factor(allthedata2$condition, levels = c("initial of 4.07", "initial of 4.48", "initial of 5.05", "initial of 5.50", "initial of 5.99", "initial of 6.50", "initial of 7.04", "initial of 7.54"))
+```
+
+```{r}
+allthedata2 %>%
   ggplot(aes(x = elapsed_mins, y = avg_od)) + 
   geom_point(aes(color= condition)) +
-  scale_color_manual(values=c("#196F3D", "#3EFF33", "#E4FF33", "#FFF833", "#FDB727", "#FD4027", "#27FD9A", "#27FDED"))
+  scale_color_manual(values=c("#FD4027","#FDB727","#FFF833","#3EFF33","#196F3D", "#27FDED", "#0256D4", "#602DC1"))+
+  theme(legend.text=element_text(size=12))
 ```
 # Analysis of growth rates
 
