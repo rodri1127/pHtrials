@@ -18,7 +18,7 @@ theme_set(theme_classic())
 
 The data are in an excel file. The output is not in a rectangular format, which is not ideal for R. However, there is one rectangular piece of the data that has all we want for our analysis - cells B28 to CU185. I can read in just this chunk of data with:
 ```{r}
-data_raw <- read_excel("2023-07-17 varying pH trial 5 (2).xlsx", range = "B28:CU221")
+data_raw <- read_excel("2023-06-30 varying pH trial 2 (2).xlsx", range = "B28:CU221")
 ```
 
 
@@ -39,14 +39,14 @@ data_final <- data_raw %>%
   mutate(well_status = case_when(well %in% blank_wells ~ "blank",
                                  well %in% edge_cells ~ "edge",
                                  TRUE ~ "interior")) %>%
-  mutate(condition = case_when(well %in% condition_1 ~ "inital of 7.91", TRUE ~ "intial of 8.59")) %>%
+  mutate(condition = case_when(well %in% condition_1 ~ "inital of 5.50", TRUE ~ "intial of 5.05")) %>%
   select(elapsed_mins, well, well_status, OD600, condition)
   
 ```
 
 ```{r}
 data_final2 <- data_final %>%
-  filter(well_status == "interior") %>%
+#  filter(well_status == "interior") %>%
   filter(elapsed_mins >= 100) %>%
   group_by(elapsed_mins, condition) %>%
   summarise(avg_od = mean(OD600))
@@ -133,9 +133,11 @@ growth_rates %>%
 
 ```{r}
 growth_rates %>% 
+  mutate(condition = case_when(well %in% condition_1 ~ "inital of 5.50", TRUE ~ "intial of 5.05")) %>%
   ggplot(aes(x = well_status, y = mumax)) +
   geom_boxplot(outlier.shape = NA, color = "gray") +
-  geom_jitter(width = .1)
+  geom_jitter(width = .1) +
+  facet_wrap(~condition)
 ```
 There is clearly a difference between the edges and the interiors of the plate. I'll construct a confidence interval to get a sense of how big the difference is.
 
