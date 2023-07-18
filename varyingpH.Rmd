@@ -16,11 +16,14 @@ theme_set(theme_classic())
 
 ## Step 1: Import the data
 
-The data are in an excel file. The output is not in a rectangular format, which is not ideal for R. However, there is one rectangular piece of the data that has all we want for our analysis - cells B28 to CU185. I can read in just this chunk of data with:
 ```{r}
-data_raw <- read_excel("2023-06-30 varying pH trial 2 (2).xlsx", range = "B28:CU221")
+data_raw1 <- read_excel("2023-06-22 varying pH trial 1 (2).xlsx", range = "B28:CU317")
+data_raw2 <- read_excel("2023-06-30 varying pH trial 2 (2).xlsx", range = "B28:CU221")
+data_raw3 <- read_excel("2023-07-05 varying pH trial 3 (2).xlsx", range = "B28:CU221")
+data_raw4 <- read_excel("2023-07-14 varying pH trial 4_1(success).xlsx", range = "B28:CU221")
 ```
 
+## Step 2: Define key varibales
 
 ```{r}
 blank_wells <- c("A1", "B1" , "C1", "D1", "E1", "F1", "G1", "H1", "A12", "B12", "C12", "D12", "E12", "F12","G12", "H12")
@@ -30,8 +33,26 @@ edge_cells <- c("A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11","H2
 condition_1 <- c("A1", "A2", "A3", "A4", "A5", "A6","B1", "B2", "B3", "B4", "B5", "B6", "C1", "C2", "C3", "C4", "C5", "C6", "D1", "D2", "D3", "D4", "D5", "D6", "E1", "E2", "E3", "E4", "E5", "E6", "F1", "F2", "F3", "F4", "F5", "F6", "G1", "G2", "G3", "G4", "G5", "G6", "H1", "H2", "H3", "H4", "H5", "H6")
 ```
 
+## Wrangle the data into 'tidy format'
+
 ```{r}
-data_final <- data_raw %>% 
+data_finaltrial1 <- data_raw1 %>% 
+  pivot_longer(cols = matches("[A-H][0-9]+"), names_to = "well", values_to = "OD600") %>% 
+  group_by(well) %>% 
+  mutate(elapsed_mins = (Time[[1]] %--% Time) / dminutes(1) ) %>% 
+  ungroup() %>%
+  mutate(well_status = case_when(well %in% blank_wells ~ "blank",
+                                 well %in% edge_cells ~ "edge",
+                                 TRUE ~ "interior")) %>%
+  mutate(condition = case_when(well %in% condition_1 ~ "inital of 6.50", TRUE ~ "intial of 5.99")) %>%
+  select(elapsed_mins, well, well_status, OD600, condition)
+  
+data_final2trial1 <- data_finaltrial1 %>%
+  group_by(elapsed_mins, condition) %>%
+  summarise(avg_od = mean(OD600))
+```
+```{r}
+data_finaltrial2 <- data_raw2 %>% 
   pivot_longer(cols = matches("[A-H][0-9]+"), names_to = "well", values_to = "OD600") %>% 
   group_by(well) %>% 
   mutate(elapsed_mins = (Time[[1]] %--% Time) / dminutes(1) ) %>% 
@@ -42,21 +63,56 @@ data_final <- data_raw %>%
   mutate(condition = case_when(well %in% condition_1 ~ "inital of 5.50", TRUE ~ "intial of 5.05")) %>%
   select(elapsed_mins, well, well_status, OD600, condition)
   
+data_final2trial2 <- data_finaltrial2 %>%
+  group_by(elapsed_mins, condition) %>%
+  summarise(avg_od = mean(OD600))
 ```
 
 ```{r}
-data_final2 <- data_final %>%
-#  filter(well_status == "interior") %>%
+data_finaltrial3 <- data_raw3 %>% 
+  pivot_longer(cols = matches("[A-H][0-9]+"), names_to = "well", values_to = "OD600") %>% 
+  group_by(well) %>% 
+  mutate(elapsed_mins = (Time[[1]] %--% Time) / dminutes(1) ) %>% 
+  ungroup() %>%
+  mutate(well_status = case_when(well %in% blank_wells ~ "blank",
+                                 well %in% edge_cells ~ "edge",
+                                 TRUE ~ "interior")) %>%
+  mutate(condition = case_when(well %in% condition_1 ~ "inital of 4.48", TRUE ~ "intial of 4.07")) %>%
+  select(elapsed_mins, well, well_status, OD600, condition)
+  
+data_final2trial3 <- data_finaltrial3 %>%
   filter(elapsed_mins >= 100) %>%
   group_by(elapsed_mins, condition) %>%
   summarise(avg_od = mean(OD600))
 ```
 
 ```{r}
-data_final2 %>%
+data_finaltrial4 <- data_raw4 %>% 
+  pivot_longer(cols = matches("[A-H][0-9]+"), names_to = "well", values_to = "OD600") %>% 
+  group_by(well) %>% 
+  mutate(elapsed_mins = (Time[[1]] %--% Time) / dminutes(1) ) %>% 
+  ungroup() %>%
+  mutate(well_status = case_when(well %in% blank_wells ~ "blank",
+                                 well %in% edge_cells ~ "edge",
+                                 TRUE ~ "interior")) %>%
+  mutate(condition = case_when(well %in% condition_1 ~ "inital of 7.04", TRUE ~ "intial of 7.54")) %>%
+  select(elapsed_mins, well, well_status, OD600, condition)
+  
+data_final2trial4 <- data_finaltrial4 %>%
+  group_by(elapsed_mins, condition) %>%
+  summarise(avg_od = mean(OD600))
+```
+## Join all the indivdual tidy data frames to one tibble
+
+```{r}
+allthedata <- bind_rows(data_final2trial1, data_final2trial2, data_final2trial3, data_final2trial4)
+```
+
+```{r}
+allthedata %>%
   ggplot(aes(x = elapsed_mins, y = avg_od)) + 
   geom_point(aes(color= condition)) +
-  scale_color_manual(values=c("#33B8FF", "#3339FF"))
+  scale_color_manual(values=c("#196F3D", "#3EFF33", "#E4FF33", "#FFF833", "#FDB727", "#FD4027", "#27FD9A", "#27FDED"))
 ```
 # Analysis of growth rates
 
