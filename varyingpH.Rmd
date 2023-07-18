@@ -18,7 +18,7 @@ theme_set(theme_classic())
 
 The data are in an excel file. The output is not in a rectangular format, which is not ideal for R. However, there is one rectangular piece of the data that has all we want for our analysis - cells B28 to CU185. I can read in just this chunk of data with:
 ```{r}
-data_raw <- read_excel("2023-07-05 varying pH trial 3 (2).xlsx", range = "B28:CU221")
+data_raw <- read_excel("2023-07-17 varying pH trial 5 (2).xlsx", range = "B28:CU221")
 ```
 
 
@@ -39,7 +39,7 @@ data_final <- data_raw %>%
   mutate(well_status = case_when(well %in% blank_wells ~ "blank",
                                  well %in% edge_cells ~ "edge",
                                  TRUE ~ "interior")) %>%
-  mutate(condition = case_when(well %in% condition_1 ~ "inital of 4.5", TRUE ~ "intial of 4.0")) %>%
+  mutate(condition = case_when(well %in% condition_1 ~ "inital of 7.91", TRUE ~ "intial of 8.59")) %>%
   select(elapsed_mins, well, well_status, OD600, condition)
   
 ```
@@ -51,10 +51,12 @@ data_final2 <- data_final %>%
   group_by(elapsed_mins, condition) %>%
   summarise(avg_od = mean(OD600))
 ```
+
 ```{r}
 data_final2 %>%
   ggplot(aes(x = elapsed_mins, y = avg_od)) + 
-  geom_point(aes(color= condition))
+  geom_point(aes(color= condition)) +
+  scale_color_manual(values=c("#33B8FF", "#3339FF"))
 ```
 # Analysis of growth rates
 
