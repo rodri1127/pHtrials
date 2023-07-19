@@ -5,6 +5,7 @@ edits: "Rodrigo Rosas"
 date: "`r Sys.Date()`"
 output: html_document
 ---
+##calling packages needed for analysis
 
 ```{r}
 library(tidyverse)
@@ -117,6 +118,8 @@ allthedata2$condition <- as.factor(allthedata2$condition)
 allthedata2$condition <-factor(allthedata2$condition, levels = c("initial of 4.07", "initial of 4.48", "initial of 5.05", "initial of 5.50", "initial of 5.99", "initial of 6.50", "initial of 7.04", "initial of 7.54"))
 ```
 
+##plot all the pH conditions onto one plot
+
 ```{r}
 allthedata2 %>%
   ggplot(aes(x = elapsed_mins, y = avg_od)) + 
@@ -124,32 +127,26 @@ allthedata2 %>%
   scale_color_manual(values=c("#FD4027","#FDB727","#FFF833","#3EFF33","#196F3D", "#27FDED", "#0256D4", "#602DC1"))+
   theme(legend.text=element_text(size=12))
 ```
-# Analysis of growth rates
-
-## Initial visuzlization
-
-Before we try to estimate a growth rate, let's just take a look at our data and make sure things look sensible.
-
+##split each plate into a tibble of its respective condition
 ```{r}
-data_final %>% 
-  ggplot(aes(x = elapsed_mins, y = OD600)) +
-  geom_point(alpha = 0.1) +
-  facet_wrap(condition ~ well_status)
-```
-That looks good! We see none of the blanks grew, and all of the wells with cells look like they grew. It looks like things might be slightly more variable on the edge than in the interior.
-
-
-The package `growthrates` has many ways to estimate growth rates. Type `vignette("Introduction", package = "growthrates")` on the console to learn lots more.
-
-For this analysis we'll use the "easy linear" approach, which uses liner regression to find the maximal growth rate.
-```{r}
-splitted.data <- multisplit(data_final2, "condition")
-data_finalcond1 <- splitted.data[[1]]
-data_finalcond2 <- splitted.data[[2]]
+splitted.data1 <- multisplit(data_final2trial1, "condition")
+splitted.data2 <- multisplit(data_final2trial2, "condition")
+splitted.data3 <- multisplit(data_final2trial3, "condition")
+splitted.data4 <- multisplit(data_final2trial4, "condition")
+data_final6.5<- splitted.data1[[2]]
+data_final6.0 <- splitted.data1[[1]]
+data_final5.5<- splitted.data2[[2]]
+data_final5.0<- splitted.data2[[1]]
+data_final4.0<- splitted.data3[[1]]
+data_final4.5<- splitted.data3[[2]]
+data_final7.0<- splitted.data4[[1]]
+data_final7.5<- splitted.data2[[2]]
 ```
 
+
+##find max growth rates of each replicate for trial 1 (6.5 and 6.0 initial pH)
 ```{r}
-cells_only <- filter(data_final, well_status != "blank")
+cells_only <- filter(data_finaltrial1, well_status != "blank")
 
 many_easylinear_fits <- all_easylinear(OD600 ~ elapsed_mins |well , data = cells_only)
 ```
